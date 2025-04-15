@@ -4,6 +4,21 @@ Ein einfacher Timer für Präsentationen mit mehreren Topics.
 
 [Live Demo](https://leon-hollmann.github.io/PresentationTimer/)
 
+## Release v1.0.0
+
+Der erste Release des Präsentationstimer bietet eine benutzerfreundliche Lösung für die Zeitsteuerung von Präsentationen mit mehreren Topics. Die Anwendung ermöglicht es, mehrere Topics mit individuellen Zeiten zu verwalten, diese per Drag & Drop zu sortieren und automatisch zum nächsten Topic zu wechseln. 
+
+### Hauptfunktionen:
+- Erstellung und Verwaltung mehrerer Topics mit minutengenauer Zeitsteuerung
+- Intuitive Drag & Drop-Funktion zum Sortieren der Topics
+- Automatischer Wechsel zum nächsten Topic nach Ablauf der Zeit
+- Speichern und Laden von Timer-Konfigurationen für spätere Verwendung
+- Präsentationsmodus für eine aufgeräumte Ansicht während der Präsentation
+- Anzeige der Gesamtzeit aller Topics
+- Sekundengenaue Zeitsteuerung für präzise Zeitplanung
+
+Die Anwendung ist vollständig im Browser ausführbar und erfordert keine Installation.
+
 ## Features
 
 - Mehrere Topics mit individueller Zeit
