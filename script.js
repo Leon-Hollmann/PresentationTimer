@@ -31,7 +31,10 @@ function addTopic() {
 
 function initSortable() {
     const container = document.getElementById('topicsList');
-    new Sortable(container, {
+    if (container.sortable) {
+        container.sortable.destroy();
+    }
+    container.sortable = new Sortable(container, {
         animation: 150,
         handle: '.drag-handle',
         touchStartThreshold: 3,
