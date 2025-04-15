@@ -1,75 +1,83 @@
-let speakers = [];
+let topics = [];
 let totalTime = 0;
 let timerInterval;
 let isRunning = false;
-let currentSpeakerIndex = -1;
+let currentTopicIndex = -1;
+let timerTitle = localStorage.getItem('timerTitle') || 'Präsentationstimer';
 
-function addSpeaker() {
-    const name = document.getElementById('speakerName').value;
-    const minutes = parseInt(document.getElementById('speakerMinutes').value) || 0;
-    const seconds = parseInt(document.getElementById('speakerSeconds').value) || 0;
+function addTopic() {
+    const name = document.getElementById('topicName').value;
+    const minutes = parseInt(document.getElementById('topicMinutes').value) || 0;
+    const seconds = parseInt(document.getElementById('topicSeconds').value) || 0;
     const totalSeconds = minutes * 60 + seconds;
     
     if (name && totalSeconds > 0) {
-        speakers.push({
+        topics.push({
             name: name,
             time: totalSeconds,
             remaining: totalSeconds,
             isActive: false
         });
         
-        updateSpeakersList();
+        updateTopicsList();
         updateTotalTime();
         initSortable();
         
-        document.getElementById('speakerName').value = '';
-        document.getElementById('speakerMinutes').value = '';
-        document.getElementById('speakerSeconds').value = '';
+        document.getElementById('topicName').value = '';
+        document.getElementById('topicMinutes').value = '';
+        document.getElementById('topicSeconds').value = '';
     }
 }
 
 function initSortable() {
-    const container = document.getElementById('speakersList');
+    const container = document.getElementById('topicsList');
     new Sortable(container, {
         animation: 150,
+        handle: '.drag-handle',
         onEnd: function(evt) {
             const oldIndex = evt.oldIndex;
             const newIndex = evt.newIndex;
-            const movedItem = speakers.splice(oldIndex, 1)[0];
-            speakers.splice(newIndex, 0, movedItem);
-            updateSpeakersList();
+            const movedItem = topics.splice(oldIndex, 1)[0];
+            topics.splice(newIndex, 0, movedItem);
+            updateTopicsList();
             updateTotalTime();
         }
     });
 }
 
-function updateSpeakersList() {
-    const container = document.getElementById('speakersList');
+function updateTopicsList() {
+    const container = document.getElementById('topicsList');
     container.innerHTML = '';
     
-    speakers.forEach((speaker, index) => {
+    topics.forEach((topic, index) => {
         const card = document.createElement('div');
-        card.className = `col-md-4 mb-3 speaker-card ${index === currentSpeakerIndex ? 'active-speaker' : ''} ${speaker.remaining === 0 ? 'expired-topic' : ''}`;
+        card.className = `col-md-4 mb-3 topic-card ${index === currentTopicIndex ? 'active-topic' : ''} ${topic.remaining === 0 ? 'expired-topic' : ''}`;
         
         const showPlayButton = !isRunning && 
-            index === currentSpeakerIndex + 1 && 
-            currentSpeakerIndex >= 0 && 
-            speakers[currentSpeakerIndex].remaining === 0;
+            index === currentTopicIndex + 1 && 
+            currentTopicIndex >= 0 && 
+            topics[currentTopicIndex].remaining === 0;
+        const presentationMode = document.getElementById('presentationMode').checked;
         
         card.innerHTML = `
             <div class="card">
                 <div class="card-body position-relative">
-                    <button class="btn btn-link position-absolute top-0 end-0 p-2" onclick="removeSpeaker(${index})">
-                        <i class="bi bi-x-circle-fill remove-icon"></i>
-                    </button>
+                    ${!presentationMode ? `
+                        <button class="btn btn-link position-absolute top-0 end-0 p-2" onclick="removeTopic(${index})">
+                            <i class="bi bi-x-circle-fill remove-icon"></i>
+                        </button>
+                        <div class="drag-handle position-absolute bottom-0 start-0 p-2">
+                            <i class="bi bi-grip-vertical"></i>
+                        </div>
+                    ` : ''}
                     ${showPlayButton ? `
                         <button class="btn btn-link position-absolute bottom-0 start-0 p-2 play-button" onclick="continueTimer()">
                             <i class="bi bi-play-circle-fill"></i>
                         </button>
                     ` : ''}
-                    <h5 class="card-title">${speaker.name}</h5>
+                    <h5 class="card-title">${topic.name}</h5>
                     <div class="text-center">
-                        <h3 class="time-display" id="time-${index}">${formatTime(speaker.remaining)}</h3>
+                        <h3 class="time-display" id="time-${index}">${formatTime(topic.remaining)}</h3>
                     </div>
                 </div>
             </div>
@@ -79,7 +87,7 @@ function updateSpeakersList() {
 }
 
 function updateTotalTime() {
-    totalTime = speakers.reduce((sum, speaker) => sum + speaker.remaining, 0);
+    totalTime = topics.reduce((sum, topic) => sum + topic.remaining, 0);
     document.getElementById('totalTime').textContent = formatTime(totalTime);
 }
 
@@ -100,30 +108,52 @@ function togglePresentationMode() {
     localStorage.setItem('presentationMode', presentationMode);
     
     const addTopicCard = document.querySelector('.card-title').closest('.col-md-6');
-    const totalTimeCard = document.querySelector('.col-md-6:nth-child(2)');
     const saveButton = document.querySelector('.btn-info');
     const loadButton = document.querySelector('.btn-warning');
     
-    [addTopicCard, totalTimeCard, saveButton, loadButton].forEach(element => {
+    [addTopicCard, saveButton, loadButton].forEach(element => {
         if (element) {
             element.style.display = presentationMode ? 'none' : '';
+        }
+    });
+    
+    updateTopicsList();
+}
+
+function initEditableTitle() {
+    const titleElement = document.getElementById('timerTitle');
+    const editIcon = document.querySelector('.edit-icon');
+    
+    titleElement.textContent = timerTitle;
+    
+    titleElement.addEventListener('click', () => {
+        const newTitle = prompt('Neuer Titel:', timerTitle);
+        if (newTitle && newTitle.trim() !== '') {
+            timerTitle = newTitle.trim();
+            titleElement.textContent = timerTitle;
+            localStorage.setItem('timerTitle', timerTitle);
         }
     });
 }
 
 // Lade Einstellungen beim Start
 document.addEventListener('DOMContentLoaded', function() {
+    initEditableTitle();
+    
+    // Gesamtzeit Einstellung
     const savedShowTotalTime = localStorage.getItem('showTotalTime');
     if (savedShowTotalTime !== null) {
         document.getElementById('showTotalTime').checked = savedShowTotalTime === 'true';
         toggleTotalTime();
     }
     
+    // Auto-Continue Einstellung
     const savedAutoContinue = localStorage.getItem('autoContinue');
     if (savedAutoContinue !== null) {
         document.getElementById('autoContinue').checked = savedAutoContinue === 'true';
     }
     
+    // Präsentationsmodus Einstellung
     const savedPresentationMode = localStorage.getItem('presentationMode');
     if (savedPresentationMode !== null) {
         document.getElementById('presentationMode').checked = savedPresentationMode === 'true';
@@ -132,13 +162,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function startTimer() {
-    if (speakers.length === 0) return;
+    if (topics.length === 0) return;
     
     isRunning = true;
-    if (currentSpeakerIndex === -1) {
-        currentSpeakerIndex = 0;
+    if (currentTopicIndex === -1) {
+        currentTopicIndex = 0;
     }
-    speakers[currentSpeakerIndex].isActive = true;
+    topics[currentTopicIndex].isActive = true;
     document.getElementById('startButton').disabled = true;
     document.getElementById('stopButton').disabled = false;
     
@@ -149,28 +179,28 @@ function startTimer() {
         const delta = now - lastUpdate;
         lastUpdate = now;
         
-        if (currentSpeakerIndex < speakers.length) {
-            const currentSpeaker = speakers[currentSpeakerIndex];
-            if (currentSpeaker.remaining > 0) {
-                currentSpeaker.remaining = Math.max(0, currentSpeaker.remaining - delta / 1000);
+        if (currentTopicIndex < topics.length) {
+            const currentTopic = topics[currentTopicIndex];
+            if (currentTopic.remaining > 0) {
+                currentTopic.remaining = Math.max(0, currentTopic.remaining - delta / 1000);
                 totalTime = Math.max(0, totalTime - delta / 1000);
-                updateSpeakersList();
+                updateTopicsList();
                 document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
                 
-                if (currentSpeaker.remaining === 0) {
+                if (currentTopic.remaining === 0) {
                     const autoContinue = document.getElementById('autoContinue').checked;
                     if (autoContinue) {
-                        currentSpeakerIndex++;
-                        if (currentSpeakerIndex < speakers.length) {
-                            speakers[currentSpeakerIndex].isActive = true;
-                            updateSpeakersList();
+                        currentTopicIndex++;
+                        if (currentTopicIndex < topics.length) {
+                            topics[currentTopicIndex].isActive = true;
+                            updateTopicsList();
                         } else {
                             stopTimer();
                         }
                     } else {
                         isRunning = false;
                         clearInterval(timerInterval);
-                        updateSpeakersList();
+                        updateTopicsList();
                     }
                 }
             }
@@ -181,9 +211,9 @@ function startTimer() {
 }
 
 function continueTimer() {
-    if (currentSpeakerIndex < speakers.length - 1) {
-        currentSpeakerIndex++;
-        speakers[currentSpeakerIndex].isActive = true;
+    if (currentTopicIndex < topics.length - 1) {
+        currentTopicIndex++;
+        topics[currentTopicIndex].isActive = true;
         isRunning = true;
         document.getElementById('startButton').disabled = true;
         document.getElementById('stopButton').disabled = false;
@@ -195,28 +225,28 @@ function continueTimer() {
             const delta = now - lastUpdate;
             lastUpdate = now;
             
-            if (currentSpeakerIndex < speakers.length) {
-                const currentSpeaker = speakers[currentSpeakerIndex];
-                if (currentSpeaker.remaining > 0) {
-                    currentSpeaker.remaining = Math.max(0, currentSpeaker.remaining - delta / 1000);
+            if (currentTopicIndex < topics.length) {
+                const currentTopic = topics[currentTopicIndex];
+                if (currentTopic.remaining > 0) {
+                    currentTopic.remaining = Math.max(0, currentTopic.remaining - delta / 1000);
                     totalTime = Math.max(0, totalTime - delta / 1000);
-                    updateSpeakersList();
+                    updateTopicsList();
                     document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
                     
-                    if (currentSpeaker.remaining === 0) {
+                    if (currentTopic.remaining === 0) {
                         const autoContinue = document.getElementById('autoContinue').checked;
                         if (autoContinue) {
-                            currentSpeakerIndex++;
-                            if (currentSpeakerIndex < speakers.length) {
-                                speakers[currentSpeakerIndex].isActive = true;
-                                updateSpeakersList();
+                            currentTopicIndex++;
+                            if (currentTopicIndex < topics.length) {
+                                topics[currentTopicIndex].isActive = true;
+                                updateTopicsList();
                             } else {
                                 stopTimer();
                             }
                         } else {
                             isRunning = false;
                             clearInterval(timerInterval);
-                            updateSpeakersList();
+                            updateTopicsList();
                         }
                     }
                 }
@@ -232,23 +262,23 @@ function stopTimer() {
     clearInterval(timerInterval);
     document.getElementById('startButton').disabled = false;
     document.getElementById('stopButton').disabled = true;
-    updateSpeakersList();
+    updateTopicsList();
 }
 
 function resetTimer() {
     stopTimer();
-    currentSpeakerIndex = -1;
-    speakers.forEach(speaker => {
-        speaker.remaining = speaker.time;
-        speaker.isActive = false;
+    currentTopicIndex = -1;
+    topics.forEach(topic => {
+        topic.remaining = topic.time;
+        topic.isActive = false;
     });
-    updateSpeakersList();
+    updateTopicsList();
     updateTotalTime();
 }
 
-function removeSpeaker(index) {
-    speakers.splice(index, 1);
-    updateSpeakersList();
+function removeTopic(index) {
+    topics.splice(index, 1);
+    updateTopicsList();
     updateTotalTime();
 }
 
@@ -341,10 +371,13 @@ function hideLoadDialog() {
 }
 
 function saveTimersWithName(saveName) {
-    const timersToSave = speakers.map(speaker => ({
-        name: speaker.name,
-        time: speaker.time / 60
-    }));
+    const timersToSave = {
+        title: timerTitle,
+        topics: topics.map(topic => ({
+            name: topic.name,
+            time: topic.time / 60
+        }))
+    };
     
     const savedTimers = JSON.parse(localStorage.getItem('savedTimersList') || '{}');
     savedTimers[saveName] = timersToSave;
@@ -378,13 +411,16 @@ function loadTimers(name) {
     
     if (timers) {
         if (confirm('Aktuelle Timer werden überschrieben. Fortfahren?')) {
-            speakers = timers.map(timer => ({
+            timerTitle = timers.title || 'Präsentationstimer';
+            document.getElementById('timerTitle').textContent = timerTitle;
+            
+            topics = timers.topics.map(timer => ({
                 name: timer.name,
                 time: timer.time * 60,
                 remaining: timer.time * 60,
                 isActive: false
             }));
-            updateSpeakersList();
+            updateTopicsList();
             updateTotalTime();
             initSortable();
             hideLoadDialog();
@@ -396,9 +432,12 @@ function loadTimers(name) {
 
 function toggleTotalTime() {
     const showTotalTime = document.getElementById('showTotalTime').checked;
-    const totalTimeCard = document.querySelector('.col-md-6:nth-child(2)');
-    totalTimeCard.style.display = showTotalTime ? 'block' : 'none';
     localStorage.setItem('showTotalTime', showTotalTime);
+    
+    const totalTimeCard = document.querySelector('.col-md-6:nth-child(2)');
+    if (totalTimeCard) {
+        totalTimeCard.style.display = showTotalTime ? '' : 'none';
+    }
 }
 
 function showSettingsDialog() {

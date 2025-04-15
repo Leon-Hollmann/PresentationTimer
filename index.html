@@ -12,7 +12,10 @@
 <body>
     <div class="container mt-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="text-center mb-0">Timer</h1>
+            <h1 class="text-center mb-0">
+                <span id="timerTitle" class="editable-title">Präsentationstimer</span>
+                <i class="bi bi-pencil-fill edit-icon ms-2"></i>
+            </h1>
             <button class="btn btn-link" onclick="showSettingsDialog()">
                 <i class="bi bi-gear-fill settings-icon"></i>
             </button>
@@ -24,10 +27,10 @@
                     <div class="card-body">
                         <h5 class="card-title">Topic hinzufügen</h5>
                         <div class="input-group mb-3">
-                            <input type="text" id="speakerName" class="form-control" placeholder="Topic">
-                            <input type="number" id="speakerMinutes" class="form-control" placeholder="Minuten">
-                            <input type="number" id="speakerSeconds" class="form-control" placeholder="Sekunden">
-                            <button class="btn btn-primary" onclick="addSpeaker()">Hinzufügen</button>
+                            <input type="text" id="topicName" class="form-control" placeholder="Topic">
+                            <input type="number" id="topicMinutes" class="form-control" placeholder="Minuten">
+                            <input type="number" id="topicSeconds" class="form-control" placeholder="Sekunden">
+                            <button class="btn btn-primary" onclick="addTopic()">Hinzufügen</button>
                         </div>
                     </div>
                 </div>
@@ -44,7 +47,7 @@
             </div>
         </div>
 
-        <div id="speakersList" class="row"></div>
+        <div id="topicsList" class="row"></div>
 
         <div class="text-center mt-4">
             <button id="startButton" class="btn btn-success" onclick="startTimer()">Start</button>

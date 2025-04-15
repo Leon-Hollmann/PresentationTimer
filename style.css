@@ -9,25 +9,22 @@
     transition: transform 0.2s;
 }
 
-.card:hover {
-    transform: translateY(-2px);
-}
-
 .btn {
     margin: 0 5px;
 }
 
-.active-speaker .card {
+.active-topic .card {
     background-color: #e3f2fd;
     border: 2px solid #2196f3;
 }
 
-.speaker-card {
-    cursor: move;
+.topic-card {
+    cursor: default;
 }
 
-.speaker-card.sortable-ghost {
+.topic-card.sortable-ghost {
     opacity: 0.5;
+    background-color: #f8f9fa;
 }
 
 .modal {
@@ -99,4 +96,35 @@
 .presentation-mode .btn-warning,
 .presentation-mode .settings-icon {
     display: none !important;
+}
+
+.editable-title {
+    cursor: pointer;
+    border-bottom: 1px dashed transparent;
+    transition: border-color 0.2s;
+}
+
+.editable-title:hover {
+    border-color: #6c757d;
+}
+
+.edit-icon {
+    font-size: 1rem;
+    color: #6c757d;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+h1:hover .edit-icon {
+    opacity: 1;
+}
+
+.drag-handle {
+    color: #6c757d;
+    transition: color 0.2s;
+}
+
+.drag-handle:hover {
+    color: #495057;
+    cursor: move;
 } 
