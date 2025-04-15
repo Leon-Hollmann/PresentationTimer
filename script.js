@@ -48,6 +48,7 @@ function initSortable() {
             topics.splice(newIndex, 0, movedItem);
             updateTopicsList();
             updateTotalTime();
+            autoSaveTimer();
         }
     });
 }
