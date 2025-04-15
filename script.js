@@ -34,6 +34,9 @@ function initSortable() {
     new Sortable(container, {
         animation: 150,
         handle: '.drag-handle',
+        touchStartThreshold: 3,
+        forceFallback: true,
+        fallbackClass: 'sortable-fallback',
         onEnd: function(evt) {
             const oldIndex = evt.oldIndex;
             const newIndex = evt.newIndex;

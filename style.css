@@ -122,9 +122,19 @@ h1:hover .edit-icon {
 .drag-handle {
     color: #6c757d;
     transition: color 0.2s;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .drag-handle:hover {
     color: #495057;
     cursor: move;
+}
+
+.sortable-fallback {
+    opacity: 0.5;
+    background-color: #f8f9fa;
+    transform: rotate(2deg);
 } 
