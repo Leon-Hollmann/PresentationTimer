@@ -51,4 +51,52 @@
 
 .list-group-item:hover {
     background-color: #f8f9fa;
+}
+
+.settings-icon {
+    font-size: 1.5rem;
+    color: #6c757d;
+    transition: color 0.2s;
+}
+
+.settings-icon:hover {
+    color: #495057;
+}
+
+.remove-icon {
+    font-size: 1.2rem;
+    color: #dc3545;
+    transition: color 0.2s;
+}
+
+.remove-icon:hover {
+    color: #bb2d3b;
+}
+
+.play-button {
+    font-size: 3rem;
+    color: #28a745;
+    transition: color 0.2s;
+    z-index: 1;
+}
+
+.play-button:hover {
+    color: #218838;
+}
+
+.play-button i {
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.2));
+}
+
+.expired-topic {
+    opacity: 0.5;
+    background-color: #f8f9fa;
+}
+
+.presentation-mode .card-title:contains("Topic hinzufügen"),
+.presentation-mode .card-title:contains("Gesamtzeit"),
+.presentation-mode .btn-info,
+.presentation-mode .btn-warning,
+.presentation-mode .settings-icon {
+    display: none !important;
 } 

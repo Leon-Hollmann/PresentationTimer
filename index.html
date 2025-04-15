@@ -5,21 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Präsentationstimer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Präsentationstimer</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-center mb-0">Timer</h1>
+            <button class="btn btn-link" onclick="showSettingsDialog()">
+                <i class="bi bi-gear-fill settings-icon"></i>
+            </button>
+        </div>
         
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Redner hinzufügen</h5>
+                        <h5 class="card-title">Topic hinzufügen</h5>
                         <div class="input-group mb-3">
-                            <input type="text" id="speakerName" class="form-control" placeholder="Name">
-                            <input type="number" id="speakerTime" class="form-control" placeholder="Zeit in Minuten">
+                            <input type="text" id="speakerName" class="form-control" placeholder="Topic">
+                            <input type="number" id="speakerMinutes" class="form-control" placeholder="Minuten">
+                            <input type="number" id="speakerSeconds" class="form-control" placeholder="Sekunden">
                             <button class="btn btn-primary" onclick="addSpeaker()">Hinzufügen</button>
                         </div>
                     </div>
@@ -45,6 +52,32 @@
             <button class="btn btn-secondary" onclick="resetTimer()">Reset</button>
             <button class="btn btn-info" onclick="showSaveDialog()">Speichern</button>
             <button class="btn btn-warning" onclick="showLoadDialog()">Laden</button>
+        </div>
+    </div>
+
+    <!-- Einstellungen Dialog -->
+    <div id="settingsDialog" class="modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Einstellungen</h5>
+                    <button type="button" class="btn-close" onclick="hideSettingsDialog()"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="showTotalTime" checked onchange="toggleTotalTime()">
+                        <label class="form-check-label" for="showTotalTime">Gesamtzeit anzeigen</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="autoContinue" checked onchange="toggleAutoContinue()">
+                        <label class="form-check-label" for="autoContinue">Automatisch nächste Topic starten</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="presentationMode" onchange="togglePresentationMode()">
+                        <label class="form-check-label" for="presentationMode">Präsentationsmodus</label>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

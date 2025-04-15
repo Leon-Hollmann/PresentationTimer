@@ -2,17 +2,19 @@ let speakers = [];
 let totalTime = 0;
 let timerInterval;
 let isRunning = false;
-let currentSpeakerIndex = 0;
+let currentSpeakerIndex = -1;
 
 function addSpeaker() {
     const name = document.getElementById('speakerName').value;
-    const time = parseInt(document.getElementById('speakerTime').value);
+    const minutes = parseInt(document.getElementById('speakerMinutes').value) || 0;
+    const seconds = parseInt(document.getElementById('speakerSeconds').value) || 0;
+    const totalSeconds = minutes * 60 + seconds;
     
-    if (name && time > 0) {
+    if (name && totalSeconds > 0) {
         speakers.push({
             name: name,
-            time: time * 60,
-            remaining: time * 60,
+            time: totalSeconds,
+            remaining: totalSeconds,
             isActive: false
         });
         
@@ -21,7 +23,8 @@ function addSpeaker() {
         initSortable();
         
         document.getElementById('speakerName').value = '';
-        document.getElementById('speakerTime').value = '';
+        document.getElementById('speakerMinutes').value = '';
+        document.getElementById('speakerSeconds').value = '';
     }
 }
 
@@ -46,18 +49,28 @@ function updateSpeakersList() {
     
     speakers.forEach((speaker, index) => {
         const card = document.createElement('div');
-        card.className = 'col-md-4 mb-3 speaker-card';
-        if (speaker.isActive) {
-            card.classList.add('active-speaker');
-        }
+        card.className = `col-md-4 mb-3 speaker-card ${index === currentSpeakerIndex ? 'active-speaker' : ''} ${speaker.remaining === 0 ? 'expired-topic' : ''}`;
+        
+        const showPlayButton = !isRunning && 
+            index === currentSpeakerIndex + 1 && 
+            currentSpeakerIndex >= 0 && 
+            speakers[currentSpeakerIndex].remaining === 0;
+        
         card.innerHTML = `
             <div class="card">
-                <div class="card-body">
+                <div class="card-body position-relative">
+                    <button class="btn btn-link position-absolute top-0 end-0 p-2" onclick="removeSpeaker(${index})">
+                        <i class="bi bi-x-circle-fill remove-icon"></i>
+                    </button>
+                    ${showPlayButton ? `
+                        <button class="btn btn-link position-absolute bottom-0 start-0 p-2 play-button" onclick="continueTimer()">
+                            <i class="bi bi-play-circle-fill"></i>
+                        </button>
+                    ` : ''}
                     <h5 class="card-title">${speaker.name}</h5>
                     <div class="text-center">
                         <h3 class="time-display" id="time-${index}">${formatTime(speaker.remaining)}</h3>
                     </div>
-                    <button class="btn btn-danger btn-sm" onclick="removeSpeaker(${index})">Entfernen</button>
                 </div>
             </div>
         `;
@@ -66,55 +79,157 @@ function updateSpeakersList() {
 }
 
 function updateTotalTime() {
-    totalTime = speakers.reduce((sum, speaker) => sum + speaker.time, 0);
+    totalTime = speakers.reduce((sum, speaker) => sum + speaker.remaining, 0);
     document.getElementById('totalTime').textContent = formatTime(totalTime);
 }
 
 function formatTime(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const secs = Math.floor(seconds % 60);
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+function toggleAutoContinue() {
+    const autoContinue = document.getElementById('autoContinue').checked;
+    localStorage.setItem('autoContinue', autoContinue);
+}
+
+function togglePresentationMode() {
+    const presentationMode = document.getElementById('presentationMode').checked;
+    localStorage.setItem('presentationMode', presentationMode);
+    
+    const addTopicCard = document.querySelector('.card-title').closest('.col-md-6');
+    const totalTimeCard = document.querySelector('.col-md-6:nth-child(2)');
+    const saveButton = document.querySelector('.btn-info');
+    const loadButton = document.querySelector('.btn-warning');
+    
+    [addTopicCard, totalTimeCard, saveButton, loadButton].forEach(element => {
+        if (element) {
+            element.style.display = presentationMode ? 'none' : '';
+        }
+    });
+}
+
+// Lade Einstellungen beim Start
+document.addEventListener('DOMContentLoaded', function() {
+    const savedShowTotalTime = localStorage.getItem('showTotalTime');
+    if (savedShowTotalTime !== null) {
+        document.getElementById('showTotalTime').checked = savedShowTotalTime === 'true';
+        toggleTotalTime();
+    }
+    
+    const savedAutoContinue = localStorage.getItem('autoContinue');
+    if (savedAutoContinue !== null) {
+        document.getElementById('autoContinue').checked = savedAutoContinue === 'true';
+    }
+    
+    const savedPresentationMode = localStorage.getItem('presentationMode');
+    if (savedPresentationMode !== null) {
+        document.getElementById('presentationMode').checked = savedPresentationMode === 'true';
+        togglePresentationMode();
+    }
+});
+
 function startTimer() {
-    if (!isRunning && speakers.length > 0) {
-        isRunning = true;
+    if (speakers.length === 0) return;
+    
+    isRunning = true;
+    if (currentSpeakerIndex === -1) {
         currentSpeakerIndex = 0;
-        speakers[0].isActive = true;
+    }
+    speakers[currentSpeakerIndex].isActive = true;
+    document.getElementById('startButton').disabled = true;
+    document.getElementById('stopButton').disabled = false;
+    
+    let lastUpdate = Date.now();
+    
+    timerInterval = setInterval(() => {
+        const now = Date.now();
+        const delta = now - lastUpdate;
+        lastUpdate = now;
+        
+        if (currentSpeakerIndex < speakers.length) {
+            const currentSpeaker = speakers[currentSpeakerIndex];
+            if (currentSpeaker.remaining > 0) {
+                currentSpeaker.remaining = Math.max(0, currentSpeaker.remaining - delta / 1000);
+                totalTime = Math.max(0, totalTime - delta / 1000);
+                updateSpeakersList();
+                document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
+                
+                if (currentSpeaker.remaining === 0) {
+                    const autoContinue = document.getElementById('autoContinue').checked;
+                    if (autoContinue) {
+                        currentSpeakerIndex++;
+                        if (currentSpeakerIndex < speakers.length) {
+                            speakers[currentSpeakerIndex].isActive = true;
+                            updateSpeakersList();
+                        } else {
+                            stopTimer();
+                        }
+                    } else {
+                        isRunning = false;
+                        clearInterval(timerInterval);
+                        updateSpeakersList();
+                    }
+                }
+            }
+        } else {
+            stopTimer();
+        }
+    }, 10);
+}
+
+function continueTimer() {
+    if (currentSpeakerIndex < speakers.length - 1) {
+        currentSpeakerIndex++;
+        speakers[currentSpeakerIndex].isActive = true;
+        isRunning = true;
         document.getElementById('startButton').disabled = true;
         document.getElementById('stopButton').disabled = false;
         
+        let lastUpdate = Date.now();
+        
         timerInterval = setInterval(() => {
+            const now = Date.now();
+            const delta = now - lastUpdate;
+            lastUpdate = now;
+            
             if (currentSpeakerIndex < speakers.length) {
                 const currentSpeaker = speakers[currentSpeakerIndex];
-                
                 if (currentSpeaker.remaining > 0) {
-                    currentSpeaker.remaining--;
-                    totalTime--;
-                    document.getElementById(`time-${currentSpeakerIndex}`).textContent = formatTime(currentSpeaker.remaining);
-                    document.getElementById('totalTime').textContent = formatTime(totalTime);
-                } else {
-                    currentSpeaker.isActive = false;
-                    currentSpeakerIndex++;
-                    if (currentSpeakerIndex < speakers.length) {
-                        speakers[currentSpeakerIndex].isActive = true;
-                    } else {
-                        stopTimer();
-                    }
+                    currentSpeaker.remaining = Math.max(0, currentSpeaker.remaining - delta / 1000);
+                    totalTime = Math.max(0, totalTime - delta / 1000);
                     updateSpeakersList();
+                    document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
+                    
+                    if (currentSpeaker.remaining === 0) {
+                        const autoContinue = document.getElementById('autoContinue').checked;
+                        if (autoContinue) {
+                            currentSpeakerIndex++;
+                            if (currentSpeakerIndex < speakers.length) {
+                                speakers[currentSpeakerIndex].isActive = true;
+                                updateSpeakersList();
+                            } else {
+                                stopTimer();
+                            }
+                        } else {
+                            isRunning = false;
+                            clearInterval(timerInterval);
+                            updateSpeakersList();
+                        }
+                    }
                 }
             } else {
                 stopTimer();
             }
-        }, 1000);
+        }, 10);
     }
 }
 
 function stopTimer() {
     isRunning = false;
     clearInterval(timerInterval);
-    speakers.forEach(speaker => speaker.isActive = false);
     document.getElementById('startButton').disabled = false;
     document.getElementById('stopButton').disabled = true;
     updateSpeakersList();
@@ -122,7 +237,7 @@ function stopTimer() {
 
 function resetTimer() {
     stopTimer();
-    currentSpeakerIndex = 0;
+    currentSpeakerIndex = -1;
     speakers.forEach(speaker => {
         speaker.remaining = speaker.time;
         speaker.isActive = false;
@@ -277,4 +392,19 @@ function loadTimers(name) {
     } else {
         alert('Keine Timer mit diesem Namen gefunden!');
     }
+}
+
+function toggleTotalTime() {
+    const showTotalTime = document.getElementById('showTotalTime').checked;
+    const totalTimeCard = document.querySelector('.col-md-6:nth-child(2)');
+    totalTimeCard.style.display = showTotalTime ? 'block' : 'none';
+    localStorage.setItem('showTotalTime', showTotalTime);
+}
+
+function showSettingsDialog() {
+    document.getElementById('settingsDialog').style.display = 'block';
+}
+
+function hideSettingsDialog() {
+    document.getElementById('settingsDialog').style.display = 'none';
 } 
