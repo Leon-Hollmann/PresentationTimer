@@ -22,6 +22,7 @@ function addTopic() {
         updateTopicsList();
         updateTotalTime();
         initSortable();
+        autoSaveTimer();
         
         document.getElementById('topicName').value = '';
         document.getElementById('topicMinutes').value = '';
@@ -116,8 +117,9 @@ function togglePresentationMode() {
     const addTopicCard = document.querySelector('.card-title').closest('.col-md-6');
     const saveButton = document.querySelector('.btn-info');
     const loadButton = document.querySelector('.btn-warning');
+    const newButton = document.querySelector('.btn-secondary[onclick="newTimer()"]');
     
-    [addTopicCard, saveButton, loadButton].forEach(element => {
+    [addTopicCard, saveButton, loadButton, newButton].forEach(element => {
         if (element) {
             element.style.display = presentationMode ? 'none' : '';
         }
@@ -142,9 +144,49 @@ function initEditableTitle() {
     });
 }
 
+function autoSaveTimer() {
+    const currentTimer = {
+        title: timerTitle,
+        topics: topics.map(topic => ({
+            name: topic.name,
+            time: topic.time,
+            remaining: topic.remaining,
+            isActive: topic.isActive
+        })),
+        currentTopicIndex: currentTopicIndex,
+        isRunning: isRunning,
+        totalTime: totalTime
+    };
+    localStorage.setItem('currentTimer', JSON.stringify(currentTimer));
+}
+
+function loadCurrentTimer() {
+    const savedTimer = localStorage.getItem('currentTimer');
+    if (savedTimer) {
+        const currentTimer = JSON.parse(savedTimer);
+        timerTitle = currentTimer.title;
+        topics = currentTimer.topics;
+        currentTopicIndex = currentTimer.currentTopicIndex;
+        isRunning = currentTimer.isRunning;
+        totalTime = currentTimer.totalTime;
+        
+        document.getElementById('timerTitle').textContent = timerTitle;
+        updateTopicsList();
+        document.getElementById('totalTime').textContent = formatTime(totalTime);
+        initSortable();
+        
+        if (isRunning) {
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('stopButton').disabled = false;
+            startTimer();
+        }
+    }
+}
+
 // Lade Einstellungen beim Start
 document.addEventListener('DOMContentLoaded', function() {
     initEditableTitle();
+    loadCurrentTimer();
     
     // Gesamtzeit Einstellung
     const savedShowTotalTime = localStorage.getItem('showTotalTime');
@@ -192,6 +234,7 @@ function startTimer() {
                 totalTime = Math.max(0, totalTime - delta / 1000);
                 updateTopicsList();
                 document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
+                autoSaveTimer();
                 
                 if (currentTopic.remaining === 0) {
                     const autoContinue = document.getElementById('autoContinue').checked;
@@ -200,6 +243,7 @@ function startTimer() {
                         if (currentTopicIndex < topics.length) {
                             topics[currentTopicIndex].isActive = true;
                             updateTopicsList();
+                            autoSaveTimer();
                         } else {
                             stopTimer();
                         }
@@ -207,6 +251,7 @@ function startTimer() {
                         isRunning = false;
                         clearInterval(timerInterval);
                         updateTopicsList();
+                        autoSaveTimer();
                     }
                 }
             }
@@ -223,6 +268,7 @@ function continueTimer() {
         isRunning = true;
         document.getElementById('startButton').disabled = true;
         document.getElementById('stopButton').disabled = false;
+        autoSaveTimer();
         
         let lastUpdate = Date.now();
         
@@ -238,6 +284,7 @@ function continueTimer() {
                     totalTime = Math.max(0, totalTime - delta / 1000);
                     updateTopicsList();
                     document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
+                    autoSaveTimer();
                     
                     if (currentTopic.remaining === 0) {
                         const autoContinue = document.getElementById('autoContinue').checked;
@@ -246,6 +293,7 @@ function continueTimer() {
                             if (currentTopicIndex < topics.length) {
                                 topics[currentTopicIndex].isActive = true;
                                 updateTopicsList();
+                                autoSaveTimer();
                             } else {
                                 stopTimer();
                             }
@@ -253,6 +301,7 @@ function continueTimer() {
                             isRunning = false;
                             clearInterval(timerInterval);
                             updateTopicsList();
+                            autoSaveTimer();
                         }
                     }
                 }
@@ -269,6 +318,7 @@ function stopTimer() {
     document.getElementById('startButton').disabled = false;
     document.getElementById('stopButton').disabled = true;
     updateTopicsList();
+    autoSaveTimer();
 }
 
 function resetTimer() {
@@ -280,12 +330,14 @@ function resetTimer() {
     });
     updateTopicsList();
     updateTotalTime();
+    autoSaveTimer();
 }
 
 function removeTopic(index) {
     topics.splice(index, 1);
     updateTopicsList();
     updateTotalTime();
+    autoSaveTimer();
 }
 
 function showSaveDialog() {
@@ -301,15 +353,15 @@ function updateExistingSavesList() {
     Object.keys(savedTimers).forEach(name => {
         const item = document.createElement('div');
         item.className = 'list-group-item d-flex justify-content-between align-items-center';
-        
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = name;
-        nameSpan.style.cursor = 'pointer';
-        nameSpan.onclick = () => {
+        item.style.cursor = 'pointer';
+        item.onclick = () => {
             if (confirm('Soll der Speicherstand "' + name + '" überschrieben werden?')) {
                 saveTimersWithName(name);
             }
         };
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = name;
         
         const deleteButton = document.createElement('button');
         deleteButton.className = 'btn btn-danger btn-sm';
@@ -338,11 +390,11 @@ function updateSavedTimersList() {
     Object.keys(savedTimers).forEach(name => {
         const item = document.createElement('div');
         item.className = 'list-group-item d-flex justify-content-between align-items-center';
+        item.style.cursor = 'pointer';
+        item.onclick = () => loadTimers(name);
         
         const nameSpan = document.createElement('span');
         nameSpan.textContent = name;
-        nameSpan.style.cursor = 'pointer';
-        nameSpan.onclick = () => loadTimers(name);
         
         const deleteButton = document.createElement('button');
         deleteButton.className = 'btn btn-danger btn-sm';
@@ -426,10 +478,17 @@ function loadTimers(name) {
                 remaining: timer.time * 60,
                 isActive: false
             }));
+            
+            // Reset Timer-Status
+            currentTopicIndex = -1;
+            isRunning = false;
+            totalTime = topics.reduce((sum, topic) => sum + topic.time, 0);
+            
             updateTopicsList();
-            updateTotalTime();
+            document.getElementById('totalTime').textContent = formatTime(totalTime);
             initSortable();
             hideLoadDialog();
+            autoSaveTimer();
         }
     } else {
         alert('Keine Timer mit diesem Namen gefunden!');
@@ -452,4 +511,18 @@ function showSettingsDialog() {
 
 function hideSettingsDialog() {
     document.getElementById('settingsDialog').style.display = 'none';
+}
+
+function newTimer() {
+    if (confirm('Möchten Sie einen neuen Timer erstellen? Alle nicht gespeicherten Änderungen gehen verloren.')) {
+        topics = [];
+        currentTopicIndex = -1;
+        isRunning = false;
+        totalTime = 0;
+        timerTitle = 'Präsentationstimer';
+        document.getElementById('timerTitle').textContent = timerTitle;
+        updateTopicsList();
+        document.getElementById('totalTime').textContent = formatTime(totalTime);
+        autoSaveTimer();
+    }
 } 

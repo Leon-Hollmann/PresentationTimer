@@ -49,12 +49,17 @@
 
         <div id="topicsList" class="row"></div>
 
-        <div class="text-center mt-4">
-            <button id="startButton" class="btn btn-success" onclick="startTimer()">Start</button>
-            <button id="stopButton" class="btn btn-danger" onclick="stopTimer()" disabled>Stop</button>
-            <button class="btn btn-secondary" onclick="resetTimer()">Reset</button>
-            <button class="btn btn-info" onclick="showSaveDialog()">Speichern</button>
-            <button class="btn btn-warning" onclick="showLoadDialog()">Laden</button>
+        <div class="d-flex justify-content-between mb-3">
+            <div>
+                <button class="btn btn-info" onclick="showSaveDialog()">Speichern</button>
+                <button class="btn btn-warning" onclick="showLoadDialog()">Laden</button>
+                <button class="btn btn-secondary" onclick="newTimer()">Neu</button>
+            </div>
+            <div>
+                <button class="btn btn-success" onclick="startTimer()" id="startButton">Start</button>
+                <button class="btn btn-danger" onclick="stopTimer()" id="stopButton" disabled>Stop</button>
+                <button class="btn btn-secondary" onclick="resetTimer()">Reset</button>
+            </div>
         </div>
     </div>
 
