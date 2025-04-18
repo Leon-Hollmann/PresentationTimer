@@ -22,7 +22,7 @@ function addTopic() {
         updateTopicsList();
         updateTotalTime();
         initSortable();
-        autoSaveTimer();
+        
         
         document.getElementById('topicName').value = '';
         document.getElementById('topicMinutes').value = '';
@@ -48,7 +48,7 @@ function initSortable() {
             topics.splice(newIndex, 0, movedItem);
             updateTopicsList();
             updateTotalTime();
-            autoSaveTimer();
+            
         }
     });
 }
@@ -83,7 +83,7 @@ function updateTopicsList() {
                             <i class="bi bi-play-circle-fill"></i>
                         </button>
                     ` : ''}
-                    <h5 class="card-title">${topic.name}</h5>
+                    <h5 class="card-title editable-title" onclick="editTopicName(${index})">${topic.name}</h5>
                     <div class="text-center">
                         <h3 class="time-display" id="time-${index}">${formatTime(topic.remaining)}</h3>
                     </div>
@@ -143,22 +143,6 @@ function initEditableTitle() {
             localStorage.setItem('timerTitle', timerTitle);
         }
     });
-}
-
-function autoSaveTimer() {
-    const currentTimer = {
-        title: timerTitle,
-        topics: topics.map(topic => ({
-            name: topic.name,
-            time: topic.time,
-            remaining: topic.remaining,
-            isActive: topic.isActive
-        })),
-        currentTopicIndex: currentTopicIndex,
-        isRunning: isRunning,
-        totalTime: totalTime
-    };
-    localStorage.setItem('currentTimer', JSON.stringify(currentTimer));
 }
 
 function loadCurrentTimer() {
@@ -235,7 +219,7 @@ function startTimer() {
                 totalTime = Math.max(0, totalTime - delta / 1000);
                 updateTopicsList();
                 document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
-                autoSaveTimer();
+                
                 
                 if (currentTopic.remaining === 0) {
                     const autoContinue = document.getElementById('autoContinue').checked;
@@ -244,7 +228,7 @@ function startTimer() {
                         if (currentTopicIndex < topics.length) {
                             topics[currentTopicIndex].isActive = true;
                             updateTopicsList();
-                            autoSaveTimer();
+                            
                         } else {
                             stopTimer();
                         }
@@ -252,7 +236,7 @@ function startTimer() {
                         isRunning = false;
                         clearInterval(timerInterval);
                         updateTopicsList();
-                        autoSaveTimer();
+                        
                     }
                 }
             }
@@ -269,7 +253,7 @@ function continueTimer() {
         isRunning = true;
         document.getElementById('startButton').disabled = true;
         document.getElementById('stopButton').disabled = false;
-        autoSaveTimer();
+        
         
         let lastUpdate = Date.now();
         
@@ -285,7 +269,7 @@ function continueTimer() {
                     totalTime = Math.max(0, totalTime - delta / 1000);
                     updateTopicsList();
                     document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
-                    autoSaveTimer();
+                    
                     
                     if (currentTopic.remaining === 0) {
                         const autoContinue = document.getElementById('autoContinue').checked;
@@ -294,7 +278,7 @@ function continueTimer() {
                             if (currentTopicIndex < topics.length) {
                                 topics[currentTopicIndex].isActive = true;
                                 updateTopicsList();
-                                autoSaveTimer();
+                                
                             } else {
                                 stopTimer();
                             }
@@ -302,7 +286,7 @@ function continueTimer() {
                             isRunning = false;
                             clearInterval(timerInterval);
                             updateTopicsList();
-                            autoSaveTimer();
+                            
                         }
                     }
                 }
@@ -319,7 +303,7 @@ function stopTimer() {
     document.getElementById('startButton').disabled = false;
     document.getElementById('stopButton').disabled = true;
     updateTopicsList();
-    autoSaveTimer();
+    
 }
 
 function resetTimer() {
@@ -331,14 +315,14 @@ function resetTimer() {
     });
     updateTopicsList();
     updateTotalTime();
-    autoSaveTimer();
+    
 }
 
 function removeTopic(index) {
     topics.splice(index, 1);
     updateTopicsList();
     updateTotalTime();
-    autoSaveTimer();
+    
 }
 
 function showSaveDialog() {
@@ -489,7 +473,7 @@ function loadTimers(name) {
             document.getElementById('totalTime').textContent = formatTime(totalTime);
             initSortable();
             hideLoadDialog();
-            autoSaveTimer();
+            
         }
     } else {
         alert('Keine Timer mit diesem Namen gefunden!');
@@ -524,6 +508,15 @@ function newTimer() {
         document.getElementById('timerTitle').textContent = timerTitle;
         updateTopicsList();
         document.getElementById('totalTime').textContent = formatTime(totalTime);
-        autoSaveTimer();
+        
+    }
+}
+
+function editTopicName(index) {
+    if (document.getElementById('presentationMode').checked) return;
+    const newName = prompt('Neuer Name:', topics[index].name);
+    if (newName && newName.trim() !== '') {
+        topics[index].name = newName.trim();
+        updateTopicsList();
     }
 } 
