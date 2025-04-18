@@ -228,6 +228,7 @@ function startTimer() {
     document.getElementById('stopButton').disabled = false;
     
     let lastUpdate = Date.now();
+    let lastRender = Date.now();
     
     timerInterval = setInterval(() => {
         const now = Date.now();
@@ -239,8 +240,15 @@ function startTimer() {
             if (currentTopic.remaining > 0) {
                 currentTopic.remaining = Math.max(0, currentTopic.remaining - delta / 1000);
                 totalTime = Math.max(0, totalTime - delta / 1000);
-                updateTopicsList();
-                document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
+                
+                // Nur alle 100ms aktualisieren
+                if (now - lastRender >= 100) {
+                    lastRender = now;
+                    requestAnimationFrame(() => {
+                        updateTopicsList();
+                        document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
+                    });
+                }
                 
                 if (currentTopic.remaining === 0) {
                     const autoContinue = document.getElementById('autoContinue').checked;
@@ -249,7 +257,6 @@ function startTimer() {
                         if (currentTopicIndex < topics.length) {
                             topics[currentTopicIndex].isActive = true;
                             updateTopicsList();
-                            
                         } else {
                             stopTimer();
                         }
@@ -257,14 +264,13 @@ function startTimer() {
                         isRunning = false;
                         clearInterval(timerInterval);
                         updateTopicsList();
-                        
                     }
                 }
             }
         } else {
             stopTimer();
         }
-    }, 10);
+    }, 100); // Intervall auf 100ms erhöht
 }
 
 function continueTimer() {
