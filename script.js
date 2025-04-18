@@ -71,9 +71,14 @@ function updateTopicsList() {
             <div class="card">
                 <div class="card-body position-relative">
                     ${!presentationMode ? `
-                        <button class="btn btn-link position-absolute top-0 end-0 p-2" onclick="removeTopic(${index})">
-                            <i class="bi bi-x-circle-fill remove-icon"></i>
-                        </button>
+                        <div class="position-absolute top-0 end-0 d-flex">
+                            <button class="btn btn-link p-2" onclick="showEditTopicModal(${index})">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            <button class="btn btn-link p-2" onclick="removeTopic(${index})">
+                                <i class="bi bi-x-circle-fill remove-icon"></i>
+                            </button>
+                        </div>
                         <div class="drag-handle position-absolute bottom-0 start-0 p-2">
                             <i class="bi bi-grip-vertical"></i>
                         </div>
@@ -83,7 +88,7 @@ function updateTopicsList() {
                             <i class="bi bi-play-circle-fill"></i>
                         </button>
                     ` : ''}
-                    <h5 class="card-title editable-title" onclick="editTopicName(${index})">${topic.name}</h5>
+                    <h5 class="card-title">${topic.name}</h5>
                     <div class="text-center">
                         <h3 class="time-display" id="time-${index}">${formatTime(topic.remaining)}</h3>
                     </div>
@@ -542,5 +547,68 @@ function editTopicName(index) {
     if (newName && newName.trim() !== '') {
         topics[index].name = newName.trim();
         updateTopicsList();
+    }
+}
+
+function editTopicTime(index) {
+    if (document.getElementById('presentationMode').checked || isRunning) return;
+    
+    const currentTime = topics[index].time;
+    const minutes = Math.floor(currentTime / 60);
+    const seconds = currentTime % 60;
+    
+    const newMinutes = prompt('Neue Minuten:', minutes);
+    if (newMinutes === null) return;
+    
+    const newSeconds = prompt('Neue Sekunden:', seconds);
+    if (newSeconds === null) return;
+    
+    const totalSeconds = (parseInt(newMinutes) || 0) * 60 + (parseInt(newSeconds) || 0);
+    if (totalSeconds > 0) {
+        topics[index].time = totalSeconds;
+        topics[index].remaining = totalSeconds;
+        updateTopicsList();
+        updateTotalTime();
+    }
+}
+
+function showEditTopicModal(index) {
+    if (isRunning) return;
+    
+    const topic = topics[index];
+    const minutes = Math.floor(topic.time / 60);
+    const seconds = topic.time % 60;
+    
+    document.getElementById('editTopicName').value = topic.name;
+    document.getElementById('editTopicMinutes').value = minutes;
+    document.getElementById('editTopicSeconds').value = seconds;
+    document.getElementById('editTopicIndex').value = index;
+    
+    const modal = new bootstrap.Modal(document.getElementById('editTopicModal'));
+    modal.show();
+}
+
+function hideEditTopicModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editTopicModal'));
+    if (modal) {
+        modal.hide();
+    }
+}
+
+function saveEditedTopic() {
+    const index = parseInt(document.getElementById('editTopicIndex').value);
+    const name = document.getElementById('editTopicName').value.trim();
+    const minutes = parseInt(document.getElementById('editTopicMinutes').value) || 0;
+    const seconds = parseInt(document.getElementById('editTopicSeconds').value) || 0;
+    const totalSeconds = minutes * 60 + seconds;
+    
+    if (name && totalSeconds > 0) {
+        topics[index].name = name;
+        topics[index].time = totalSeconds;
+        topics[index].remaining = totalSeconds;
+        
+        updateTopicsList();
+        updateTotalTime();
+        hideEditTopicModal();
     }
 } 
