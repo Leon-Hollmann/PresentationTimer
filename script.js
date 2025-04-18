@@ -123,6 +123,7 @@ function toggleAutoContinue() {
 function togglePresentationMode() {
     try {
         const presentationMode = document.getElementById('presentationMode').checked;
+        alert('Präsentationsmodus: ' + (presentationMode ? 'aktiviert' : 'deaktiviert'));
         localStorage.setItem('presentationMode', presentationMode);
         
         const addTopicCard = document.querySelector('.card-title').closest('.col-md-6');
@@ -219,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function startTimer() {
     if (topics.length === 0) return;
     
+    alert('Timer wird gestartet');
     isRunning = true;
     if (currentTopicIndex === -1) {
         currentTopicIndex = 0;
@@ -241,7 +243,6 @@ function startTimer() {
                 currentTopic.remaining = Math.max(0, currentTopic.remaining - delta / 1000);
                 totalTime = Math.max(0, totalTime - delta / 1000);
                 
-                // Nur alle 100ms aktualisieren
                 if (now - lastRender >= 100) {
                     lastRender = now;
                     requestAnimationFrame(() => {
@@ -270,7 +271,7 @@ function startTimer() {
         } else {
             stopTimer();
         }
-    }, 100); // Intervall auf 100ms erhöht
+    }, 100);
 }
 
 function continueTimer() {
@@ -325,6 +326,7 @@ function continueTimer() {
 }
 
 function stopTimer() {
+    alert('Timer wird gestoppt');
     isRunning = false;
     clearInterval(timerInterval);
     document.getElementById('startButton').disabled = false;
@@ -581,6 +583,7 @@ function editTopicTime(index) {
 function showEditTopicModal(index) {
     if (isRunning) return;
     
+    alert('Edit Modal wird geöffnet für Topic: ' + topics[index].name);
     const topic = topics[index];
     const minutes = Math.floor(topic.time / 60);
     const seconds = topic.time % 60;
@@ -595,6 +598,7 @@ function showEditTopicModal(index) {
 }
 
 function hideEditTopicModal() {
+    alert('Edit Modal wird geschlossen');
     const modal = bootstrap.Modal.getInstance(document.getElementById('editTopicModal'));
     if (modal) {
         modal.hide();
@@ -602,6 +606,7 @@ function hideEditTopicModal() {
 }
 
 function saveEditedTopic() {
+    alert('Topic wird gespeichert');
     const index = parseInt(document.getElementById('editTopicIndex').value);
     const name = document.getElementById('editTopicName').value.trim();
     const minutes = parseInt(document.getElementById('editTopicMinutes').value) || 0;
