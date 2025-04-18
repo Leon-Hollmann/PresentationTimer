@@ -107,90 +107,107 @@ function formatTime(seconds) {
 }
 
 function toggleAutoContinue() {
-    const autoContinue = document.getElementById('autoContinue').checked;
-    localStorage.setItem('autoContinue', autoContinue);
+    try {
+        const autoContinue = document.getElementById('autoContinue').checked;
+        localStorage.setItem('autoContinue', autoContinue);
+    } catch (e) {
+        console.error('Fehler beim Speichern der Einstellung:', e);
+    }
 }
 
 function togglePresentationMode() {
-    const presentationMode = document.getElementById('presentationMode').checked;
-    localStorage.setItem('presentationMode', presentationMode);
-    
-    const addTopicCard = document.querySelector('.card-title').closest('.col-md-6');
-    const saveButton = document.querySelector('.btn-info');
-    const loadButton = document.querySelector('.btn-warning');
-    const newButton = document.querySelector('.btn-secondary[onclick="newTimer()"]');
-    
-    [addTopicCard, saveButton, loadButton, newButton].forEach(element => {
-        if (element) {
-            element.style.display = presentationMode ? 'none' : '';
-        }
-    });
-    
-    updateTopicsList();
+    try {
+        const presentationMode = document.getElementById('presentationMode').checked;
+        localStorage.setItem('presentationMode', presentationMode);
+        
+        const addTopicCard = document.querySelector('.card-title').closest('.col-md-6');
+        const saveButton = document.querySelector('.btn-info');
+        const loadButton = document.querySelector('.btn-warning');
+        const newButton = document.querySelector('.btn-secondary[onclick="newTimer()"]');
+        
+        [addTopicCard, saveButton, loadButton, newButton].forEach(element => {
+            if (element) {
+                element.style.display = presentationMode ? 'none' : '';
+            }
+        });
+        
+        updateTopicsList();
+    } catch (e) {
+        console.error('Fehler beim Speichern der Einstellung:', e);
+    }
 }
 
 function initEditableTitle() {
-    const titleElement = document.getElementById('timerTitle');
-    const editIcon = document.querySelector('.edit-icon');
-    
-    titleElement.textContent = timerTitle;
-    
-    titleElement.addEventListener('click', () => {
-        const newTitle = prompt('Neuer Titel:', timerTitle);
-        if (newTitle && newTitle.trim() !== '') {
-            timerTitle = newTitle.trim();
-            titleElement.textContent = timerTitle;
-            localStorage.setItem('timerTitle', timerTitle);
-        }
-    });
+    try {
+        const titleElement = document.getElementById('timerTitle');
+        const editIcon = document.querySelector('.edit-icon');
+        
+        titleElement.textContent = timerTitle;
+        
+        titleElement.addEventListener('click', () => {
+            const newTitle = prompt('Neuer Titel:', timerTitle);
+            if (newTitle && newTitle.trim() !== '') {
+                timerTitle = newTitle.trim();
+                titleElement.textContent = timerTitle;
+                localStorage.setItem('timerTitle', timerTitle);
+            }
+        });
+    } catch (e) {
+        console.error('Fehler beim Initialisieren des Titels:', e);
+    }
 }
 
 function loadCurrentTimer() {
-    const savedTimer = localStorage.getItem('currentTimer');
-    if (savedTimer) {
-        const currentTimer = JSON.parse(savedTimer);
-        timerTitle = currentTimer.title;
-        topics = currentTimer.topics;
-        currentTopicIndex = currentTimer.currentTopicIndex;
-        isRunning = currentTimer.isRunning;
-        totalTime = currentTimer.totalTime;
-        
-        document.getElementById('timerTitle').textContent = timerTitle;
-        updateTopicsList();
-        document.getElementById('totalTime').textContent = formatTime(totalTime);
-        initSortable();
-        
-        if (isRunning) {
-            document.getElementById('startButton').disabled = true;
-            document.getElementById('stopButton').disabled = false;
-            startTimer();
+    try {
+        const savedTimer = localStorage.getItem('currentTimer');
+        if (savedTimer) {
+            const currentTimer = JSON.parse(savedTimer);
+            timerTitle = currentTimer.title;
+            topics = currentTimer.topics;
+            currentTopicIndex = currentTimer.currentTopicIndex;
+            isRunning = currentTimer.isRunning;
+            totalTime = currentTimer.totalTime;
+            
+            document.getElementById('timerTitle').textContent = timerTitle;
+            updateTopicsList();
+            document.getElementById('totalTime').textContent = formatTime(totalTime);
+            initSortable();
+            
+            if (isRunning) {
+                document.getElementById('startButton').disabled = true;
+                document.getElementById('stopButton').disabled = false;
+                startTimer();
+            }
         }
+    } catch (e) {
+        console.error('Fehler beim Laden des aktuellen Timers:', e);
     }
 }
 
 // Lade Einstellungen beim Start
 document.addEventListener('DOMContentLoaded', function() {
-    initEditableTitle();
-    loadCurrentTimer();
-    
-    // Gesamtzeit Einstellung
-    const savedShowTotalTime = localStorage.getItem('showTotalTime');
-    if (savedShowTotalTime !== null) {
-        document.getElementById('showTotalTime').checked = savedShowTotalTime === 'true';
-        toggleTotalTime();
-    }
-    
-    // Auto-Continue Einstellung
-    const savedAutoContinue = localStorage.getItem('autoContinue');
-    if (savedAutoContinue !== null) {
-        document.getElementById('autoContinue').checked = savedAutoContinue === 'true';
-    }
-    
-    // Präsentationsmodus Einstellung
-    const savedPresentationMode = localStorage.getItem('presentationMode');
-    if (savedPresentationMode !== null) {
-        document.getElementById('presentationMode').checked = savedPresentationMode === 'true';
-        togglePresentationMode();
+    try {
+        initEditableTitle();
+        loadCurrentTimer();
+        
+        const savedShowTotalTime = localStorage.getItem('showTotalTime');
+        if (savedShowTotalTime !== null) {
+            document.getElementById('showTotalTime').checked = savedShowTotalTime === 'true';
+            toggleTotalTime();
+        }
+        
+        const savedAutoContinue = localStorage.getItem('autoContinue');
+        if (savedAutoContinue !== null) {
+            document.getElementById('autoContinue').checked = savedAutoContinue === 'true';
+        }
+        
+        const savedPresentationMode = localStorage.getItem('presentationMode');
+        if (savedPresentationMode !== null) {
+            document.getElementById('presentationMode').checked = savedPresentationMode === 'true';
+            togglePresentationMode();
+        }
+    } catch (e) {
+        console.error('Fehler beim Laden der Einstellungen:', e);
     }
 });
 
@@ -217,12 +234,8 @@ function startTimer() {
             if (currentTopic.remaining > 0) {
                 currentTopic.remaining = Math.max(0, currentTopic.remaining - delta / 1000);
                 totalTime = Math.max(0, totalTime - delta / 1000);
-                
-                // Nur alle 100ms aktualisieren
-                if (now % 100 < 10) {
-                    updateTopicsList();
-                    document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
-                }
+                updateTopicsList();
+                document.getElementById('totalTime').textContent = formatTime(Math.floor(totalTime));
                 
                 if (currentTopic.remaining === 0) {
                     const autoContinue = document.getElementById('autoContinue').checked;
@@ -231,6 +244,7 @@ function startTimer() {
                         if (currentTopicIndex < topics.length) {
                             topics[currentTopicIndex].isActive = true;
                             updateTopicsList();
+                            
                         } else {
                             stopTimer();
                         }
@@ -238,13 +252,14 @@ function startTimer() {
                         isRunning = false;
                         clearInterval(timerInterval);
                         updateTopicsList();
+                        
                     }
                 }
             }
         } else {
             stopTimer();
         }
-    }, 100); // Intervall auf 100ms erhöht
+    }, 10);
 }
 
 function continueTimer() {
@@ -415,21 +430,26 @@ function hideLoadDialog() {
 }
 
 function saveTimersWithName(saveName) {
-    const timersToSave = {
-        title: timerTitle,
-        topics: topics.map(topic => ({
-            name: topic.name,
-            time: topic.time / 60
-        }))
-    };
-    
-    const savedTimers = JSON.parse(localStorage.getItem('savedTimersList') || '{}');
-    savedTimers[saveName] = timersToSave;
-    localStorage.setItem('savedTimersList', JSON.stringify(savedTimers));
-    
-    hideSaveDialog();
-    document.getElementById('saveName').value = '';
-    alert('Timer wurden als "' + saveName + '" gespeichert!');
+    try {
+        const timersToSave = {
+            title: timerTitle,
+            topics: topics.map(topic => ({
+                name: topic.name,
+                time: topic.time / 60
+            }))
+        };
+        
+        const savedTimers = JSON.parse(localStorage.getItem('savedTimersList') || '{}');
+        savedTimers[saveName] = timersToSave;
+        localStorage.setItem('savedTimersList', JSON.stringify(savedTimers));
+        
+        hideSaveDialog();
+        document.getElementById('saveName').value = '';
+        alert('Timer wurden als "' + saveName + '" gespeichert!');
+    } catch (e) {
+        console.error('Fehler beim Speichern:', e);
+        alert('Fehler beim Speichern. Bitte versuchen Sie es erneut.');
+    }
 }
 
 function saveTimers() {
@@ -450,34 +470,37 @@ function saveTimers() {
 }
 
 function loadTimers(name) {
-    const savedTimers = JSON.parse(localStorage.getItem('savedTimersList') || '{}');
-    const timers = savedTimers[name];
-    
-    if (timers) {
-        if (confirm('Aktuelle Timer werden überschrieben. Fortfahren?')) {
-            timerTitle = timers.title || 'Präsentationstimer';
-            document.getElementById('timerTitle').textContent = timerTitle;
-            
-            topics = timers.topics.map(timer => ({
-                name: timer.name,
-                time: timer.time * 60,
-                remaining: timer.time * 60,
-                isActive: false
-            }));
-            
-            // Reset Timer-Status
-            currentTopicIndex = -1;
-            isRunning = false;
-            totalTime = topics.reduce((sum, topic) => sum + topic.time, 0);
-            
-            updateTopicsList();
-            document.getElementById('totalTime').textContent = formatTime(totalTime);
-            initSortable();
-            hideLoadDialog();
-            
+    try {
+        const savedTimers = JSON.parse(localStorage.getItem('savedTimersList') || '{}');
+        const timers = savedTimers[name];
+        
+        if (timers) {
+            if (confirm('Aktuelle Timer werden überschrieben. Fortfahren?')) {
+                timerTitle = timers.title || 'Präsentationstimer';
+                document.getElementById('timerTitle').textContent = timerTitle;
+                
+                topics = timers.topics.map(timer => ({
+                    name: timer.name,
+                    time: timer.time * 60,
+                    remaining: timer.time * 60,
+                    isActive: false
+                }));
+                
+                currentTopicIndex = -1;
+                isRunning = false;
+                totalTime = topics.reduce((sum, topic) => sum + topic.time, 0);
+                
+                updateTopicsList();
+                document.getElementById('totalTime').textContent = formatTime(totalTime);
+                initSortable();
+                hideLoadDialog();
+            }
+        } else {
+            alert('Keine Timer mit diesem Namen gefunden!');
         }
-    } else {
-        alert('Keine Timer mit diesem Namen gefunden!');
+    } catch (e) {
+        console.error('Fehler beim Laden:', e);
+        alert('Fehler beim Laden der Timer. Bitte versuchen Sie es erneut.');
     }
 }
 
